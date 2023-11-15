@@ -29,6 +29,12 @@ CREATE TABLE peliculas(
     idioma VARCHAR(255),
     calificacion VARCHAR(255)
     );
+
+    CREATE TABLE peliculas (
+        anio TEXT
+        
+
+    )
    -- \d nuevo.sql ¿¿puedo ahcer esto dentro del scrpt??
     -- ¿¿como se que se creo antes del rollback??
     --ROLLBACK;
