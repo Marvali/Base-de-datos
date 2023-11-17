@@ -45,14 +45,8 @@ ano_fallecimiento_director text
 --SELECT * FROM public.directores1;
 
 
-CREATE TABLE IF NOT EXISTS public.actores1(
-nombre_actor text NOT NULL,
-anioestreno_pelicula integer NOT NULL,
-titulo_pelicula text NOT NULL,
-nombre_personaje text NOT NULL,
-ano_nacimiento_actor text NOT NULL, -- quitar los /N para limpiar los datos
-ano_fallecimiento_actor text 
-);
+SELECT NULLIF(ano_nacimiento_director, '\N') AS ano_nacimiento_director_sin_n FROM public.directores1;
+
 \copy actores1(anioestreno_pelicula,titulo_pelicula,nombre_actor,ano_nacimiento_actor,ano_fallecimiento_actor,nombre_personaje) from './csv/actores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER true, ENCODING 'UTF8');
 --SELECT * FROM public.actores1;
 
@@ -78,7 +72,7 @@ nombre_caratula text NOT NULL
 );
 \copy caratulas1(anioestreno_pelicula,titulo_pelicula,nombre_caratula,fecha,url_caratula,tamano) from './csv/caratulas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER true, ENCODING 'UTF8');
 
-SELECT * FROM public.caratulas1;
+--SELECT * FROM public.caratulas1;
 
 
 
