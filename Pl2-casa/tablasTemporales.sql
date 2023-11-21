@@ -16,8 +16,12 @@ duracion text NOT NULL,
 calificacion text NOT NULL
 );
 --SELECT * FROM public.peliculas1;
-\copy peliculas1(anioestreno,titulo,generos,idioma,duracion,calificacion) from './csv/peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER true, ENCODING 'UTF8');-- SELECT duracion, CAST (SUBSTRING(duracion FROM '^[0-9]+') AS INTEGER) AS duracion FROM public.peliculas1; para hacer la comparación --filtrar de int mins, quitar la palabra mins
-SELECT CAST (SUBSTRING(duracion FROM '[0-9]+') AS INTEGER) AS duracion FROM public.peliculas1;
+\copy peliculas1(anioestreno,titulo,generos,idioma,duracion,calificacion) from './csv/peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER true, ENCODING 'UTF8');
+
+
+-- SELECT duracion, CAST (SUBSTRING(duracion FROM '^[0-9]+') AS INTEGER) AS duracion FROM public.peliculas1; para hacer la comparación --filtrar de int mins, quitar la palabra mins
+--SELECT CAST (SUBSTRING(duracion FROM '[0-9]+') AS INTEGER) AS duracion FROM public.peliculas1;
+
 
 
 
@@ -31,7 +35,7 @@ puntuacion float NOT NULL
 );
 --SELECT * FROM public.criticas1; 
 \copy criticas1(anioestreno_pelicula,titulo_pelicula,nombre_critico,puntuacion,critica,paginaweb) from './csv/criticas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER true, ENCODING 'UTF8');
-
+--SELECT * FROM public.criticas1; 
 
 
 CREATE TABLE IF NOT EXISTS public.directores1(
@@ -45,8 +49,15 @@ ano_fallecimiento_director text
 --SELECT * FROM public.directores1;
 
 
-SELECT NULLIF(ano_nacimiento_director, '\N') AS ano_nacimiento_director_sin_n FROM public.directores1;
-
+--SELECT NULLIF(ano_nacimiento_director, '\N') AS ano_nacimiento_director_sin_n FROM public.directores1;
+CREATE TABLE IF NOT EXISTS public.actores1(
+nombre_actor text NOT NULL,
+anioestreno_pelicula integer NOT NULL,
+titulo_pelicula text NOT NULL,
+ano_nacimiento_actor text NOT NULL, -- quitar los /N para limpiar los datos
+ano_fallecimiento_actor text NOT NULL,
+nombre_personaje text NOT NULL
+);
 \copy actores1(anioestreno_pelicula,titulo_pelicula,nombre_actor,ano_nacimiento_actor,ano_fallecimiento_actor,nombre_personaje) from './csv/actores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER true, ENCODING 'UTF8');
 --SELECT * FROM public.actores1;
 
@@ -72,12 +83,25 @@ nombre_caratula text NOT NULL
 );
 \copy caratulas1(anioestreno_pelicula,titulo_pelicula,nombre_caratula,fecha,url_caratula,tamano) from './csv/caratulas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER true, ENCODING 'UTF8');
 
---SELECT * FROM public.caratulas1;
+SELECT nombre_caratula,tamano FROM public.caratulas1;
 
-
+SELECT COUNT (*) FROM public.caratulas1;
+SELECT COUNT (nombre_caratula) FROM public.caratulas1;
+--SELECT DISTINT CL1 FROM public.caratulas1;
 
 
 
 ROLLBACK;
 
 
+-- SELECT
+-- CASE
+
+--WHEN DURATION NULL THEN 0
+--WHEN DURATION LIKE '%min%' THEN SPLIT (DURATION, ' ')[0] :: INTEGER
+ --ELSE SPLIT (DURATION), ' ')[1] :: INTEGER
+ --END AS COLMNA DE DESTINO
+ -- PUEDE HABER REPETIDOS CARGARTE LOS REPETIDOS 
+ -- VER QUE LAS TABLAS DE DIRECTORES Y GUINISTAS SI SU PELIS EXISTEN EN LA TABLA DE PELICULAS
+
+ -- PARA LA TABLA ACTORES PELIS, HAY QUE VER QUE CALZE PRIMERO LOS ACTORES Y LEGO LAS PELIS, PERO AL CREAR LA DE DELP ERSONAL PUEDE HABER ALGUIEN QUE SEA las 3 cosas y hay que ver si usamos UNION ALL , O UNION, VER LAS REUNIONES SI TENGO TIEMPO
