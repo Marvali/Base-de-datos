@@ -309,6 +309,7 @@ CREATE TABLE IF NOT EXISTS public.auxiliar_criticas
 
 \copy auxiliar_criticas(anio_peliculas,titulo_peliculas,nombre_critico,puntuacion,texto_critica,pagina_web_pagina_web) from './csv/criticas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --realizamos la union de paginas web
+--SELECT pagina_web_pagina_web FROM public.auxiliar_caratulas ORDER BY random() LIMIT 20;
 INSERT INTO public.auxiliar_paginaweb (pagina_web)
 SELECT DISTINCT pagina_web_pagina_web
 FROM public.auxiliar_caratulas
@@ -414,7 +415,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_alojadas"
 --2020	Fortuna	fortuna-2020	2021-04-16 12:56:19	https.//palomitas.com/películas/fortuna-2020_Carátula_mediana.jpg	Carátula_mediana
 
 \copy auxiliar_alojadas( anio_peliculas_caratulas, titulo_peliculas_caratulas, nombre_caratula_caratulas, fecha, pagina_web_pagina_web,tamanio) from './csv/caratulas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
-
+--SELECT * FROM public."auxiliar_alojadas" ORDER BY random() LIMIT 20;
 CREATE TABLE IF NOT EXISTS public."Alojadas"
 (
     fecha timestamp,
