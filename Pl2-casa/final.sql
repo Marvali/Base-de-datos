@@ -82,6 +82,7 @@ FROM public."auxiliar_actores"
 UNION
 SELECT nombre_guionista, CAST(NULLIF(ano_nacimiento_guionista, '\N') AS INTEGER), CAST(NULLIF(ano_fallecimiento_guionista, '\N') AS INTEGER)
 FROM public."auxiliar_guionistas";
+
 -- Insertamos en la tabla personal
 
 INSERT INTO public."Personal" (nombre, anio_nacimiento, anio_muerte)
@@ -232,7 +233,7 @@ CREATE TABLE IF NOT EXISTS public."Actuan"
 );
 -- insertamos desde la tabla auxilixar_actuan
 INSERT INTO public."Actuan" ("nombre_Personal_Actores", "anio_Peliculas", "titulo_Peliculas")
-SELECT DISTINCT
+SELECT
  nombre_personal_actores,
  CAST(anio_peliculas AS INTEGER) AS anio_peliculas,
  titulo_peliculas
@@ -250,6 +251,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_guionizan"
     anio_nacimiento_guionista text,
     anio_fallecimiento_guionista text
 );
+--copiamos los datos del csv a la tabla auxiliar_guionizan
 \copy auxiliar_guionizan(anio_peliculas,titulo_peliculas,nombre_personal_guionistas,anio_nacimiento_guionista,anio_fallecimiento_guionista) from './csv/guionistas_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 CREATE TABLE IF NOT EXISTS public."Guionizan"
 (
@@ -263,7 +265,7 @@ CREATE TABLE IF NOT EXISTS public."Guionizan"
         REFERENCES public."Peliculas" (anio, titulo) MATCH SIMPLE
        
 );
-
+-- insertamos desde la tabla auxilixar_guionizan
 INSERT INTO public."Guionizan" ("anio_Peliculas", "titulo_Peliculas", "nombre_Personal_Guionistas")
 SELECT 
  anio_peliculas,
@@ -292,7 +294,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_caratulas"
 
 );
 
-
+--copiamos los datos del csv a la tabla auxiliar_caratulas
 \copy auxiliar_caratulas(anio_peliculas,titulo_peliculas,nombre_caratula,fecha,pagina_web_pagina_web,tamanio) from './csv/caratulas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --SELECT * FROM public."auxiliar_caratulas";
 
@@ -309,7 +311,6 @@ CREATE TABLE IF NOT EXISTS public.auxiliar_criticas
 
 \copy auxiliar_criticas(anio_peliculas,titulo_peliculas,nombre_critico,puntuacion,texto_critica,pagina_web_pagina_web) from './csv/criticas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --realizamos la union de paginas web
---SELECT pagina_web_pagina_web FROM public.auxiliar_caratulas ORDER BY random() LIMIT 20;
 INSERT INTO public.auxiliar_paginaweb (pagina_web)
 SELECT DISTINCT pagina_web_pagina_web
 FROM public.auxiliar_caratulas
@@ -358,18 +359,7 @@ FROM public."auxiliar_caratulas";
 -- selecionamos 20 caratulas aleatorios
 --SELECT * FROM public."Caratulas" ORDER BY random() LIMIT 20;
 
---insertamos en la tabla caratulas desde la tabla auxiliar_caratulas
---quitar de de tamanio el guion bajo si lo tiene ej: Cara_pequena
-INSERT INTO public."Caratulas" (nombre_caratula, tamanio, anio_peliculas, titulo_peliculas)
-SELECT DISTINCT
- nombre_caratula,
- tamanio,
- anio_peliculas,
- titulo_peliculas
-FROM public."auxiliar_caratulas"
-ON CONFLICT (nombre_caratula, anio_peliculas, titulo_peliculas) DO NOTHING;-- necesita un mejor fix
--- selecionamos 20 caratulas aleatorios
---SELECT * FROM public."Caratulas" ORDER BY random() LIMIT 20;
+
 
 
 CREATE TABLE IF NOT EXISTS public."Criticas"
@@ -390,15 +380,14 @@ CREATE TABLE IF NOT EXISTS public."Criticas"
 
 --insertamos en la tabla criticas desde la tabla auxiliar_criticas
 INSERT INTO public."Criticas" (anio_peliculas, titulo_peliculas, nombre_critico, puntuacion, texto_critica, pagina_web_pagina_web)
-SELECT DISTINCT
+SELECT DISTINCT ON (anio_peliculas, titulo_peliculas, nombre_critico)
  anio_peliculas,
  titulo_peliculas,
  nombre_critico,
  puntuacion,
  texto_critica,
  CONCAT(REPLACE(pagina_web_pagina_web, 'https.//', 'https://'), '/') AS pagina_web_pagina_web
-FROM public."auxiliar_criticas"
-ON CONFLICT (anio_peliculas, titulo_peliculas, nombre_critico) DO NOTHING;-- necesita un mejor fix
+FROM public."auxiliar_criticas";-- necesita un mejor fix
 -- selecionamos 20 criticas aleatorios
 --SELECT * FROM public."Criticas" ORDER BY random() LIMIT 20;
 
@@ -415,7 +404,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_alojadas"
 --2020	Fortuna	fortuna-2020	2021-04-16 12:56:19	https.//palomitas.com/películas/fortuna-2020_Carátula_mediana.jpg	Carátula_mediana
 
 \copy auxiliar_alojadas( anio_peliculas_caratulas, titulo_peliculas_caratulas, nombre_caratula_caratulas, fecha, pagina_web_pagina_web,tamanio) from './csv/caratulas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
---SELECT * FROM public."auxiliar_alojadas" ORDER BY random() LIMIT 20;
+
 CREATE TABLE IF NOT EXISTS public."Alojadas"
 (
     fecha timestamp,
@@ -437,13 +426,12 @@ CREATE TABLE IF NOT EXISTS public."Alojadas"
 INSERT INTO public."Alojadas" (fecha, nombre_caratula_caratulas, anio_peliculas_caratulas, pagina_web_pagina_web, titulo_peliculas_caratulas)
 SELECT DISTINCT
 
-    CAST(NULLIF(SUBSTRING(fecha FROM '[0-9]+-[0-9]+-[0-9]+ [0-9]+:[0-9]+:[0-9]+'), '') AS TIMESTAMP) AS fecha,
+ CAST(NULLIF(SUBSTRING(fecha FROM '[0-9]+-[0-9]+-[0-9]+ [0-9]+:[0-9]+:[0-9]+'), '') AS TIMESTAMP) AS fecha,
  nombre_caratula_caratulas,
  anio_peliculas_caratulas,
  CONCAT(REPLACE(pagina_web_pagina_web, 'https.//', 'https://'), '/') AS pagina_web_pagina_web,
  titulo_peliculas_caratulas
-FROM public."auxiliar_alojadas"
-ON CONFLICT (nombre_caratula_caratulas, anio_peliculas_caratulas, pagina_web_pagina_web, titulo_peliculas_caratulas) DO NOTHING;-- necesita un mejor fix
+FROM public."auxiliar_alojadas";
 
 -- selecionamos 20 alojadas aleatorios
 --SELECT * FROM public."Alojadas" ORDER BY random() LIMIT 20;
@@ -452,5 +440,27 @@ ON CONFLICT (nombre_caratula_caratulas, anio_peliculas_caratulas, pagina_web_pag
 
 
 -- ON UPDATE CASCADE
+
+--1.Mostrar el nombre de los directores nacidos en 1970. Construir la expresión equivalente en álgebra relacional. 
+--SELECT DISTINCT d."nombre_Personal",p.anio_nacimiento FROM public."Directores" d JOIN public."Personal" p ON d."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = 1970;
+--2. Mostrar todos los idiomas de las películas, junto al número de películas que hay en ese idioma. La salida debe de estar ordenada del idioma con más películas al que tiene menos. Construir la expresión equivalente en álgebra relacional.
+--SELECT DISTINCT p.idioma, COUNT(*) AS NumPeliculas FROM public."Peliculas" p GROUP BY p.idioma ORDER BY NumPeliculas DESC;
+--3. Mostrar el nombre del actor o actores más jóvenes junto a su año de nacimiento
+--SELECT DISTINCT a."nombre_Personal", p.anio_nacimiento FROM public."Actores" a JOIN public."Personal" p ON a."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = (SELECT MIN(anio_nacimiento) FROM public."Personal");
+--4. Mostrar el nombre de los actores que aparezcan en más de una película junto con  el número de películas en las cuales ha actuado. Construir la expresión equivalente en álgebra relacional
+--NO FUNCIONA 
+SELECT DISTINCT a."nombre_Personal", COUNT(*) AS NumPeliculas FROM public."Actores" a JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" GROUP BY a."nombre_Personal" HAVING COUNT(*) > 1;
+--5. Mostrar un listado de géneros con la cantidad de películas pertenecientes al mismo, ordenados por los que tienen más películas a los que tienen menos
+--SELECT DISTINCT p.genero, COUNT(*) AS NumPeliculas FROM public."Peliculas" p GROUP BY p.genero ORDER BY NumPeliculas DESC;
+
+--6. Mostrar el nombre de todos guionistas que han trabajado en películas de género de deportes y cine negro
+--SELECT 
+--7. Solicitar los actores que hayan actuado en películas en idioma japonés y tengan una duración inferior a 100 minutos y cuyo año de nacimiento sea inferior a 1960. a salida mostrará el actor, el papel que hay interpretado en la película, así como el título, año, idioma, y duración de la misma. Construir la expresión equivalente en álgebra relacional
+
+--8. Mostrar la información de las películas que cuentan con al menos 2 carátulas. La  salida será: Título, año de lanzamiento, idioma, duración, calificación y número  que carátulas que tiene
+
+--9. Mostrar el título y año de lanzamiento de las 3 películas con mayor puntuación  media de entre todas las críticas. Mostrar también dicha puntuación media
+
+--10. Determinar el género o géneros cuyas películas tengan una puntuación media más  baja. Mostrar también dicha puntuación medi
 
 ROLLBACK;
