@@ -99,3 +99,21 @@ SELECT l.titulo from libros l JOIN libros tkam ON tkam.titulo= 'To Kill a Mockin
 -- 39. Encuentra los autores cuya edad actual es mayor que la edad promedio de todos los autores.
 
 -- 40. Muestra los títulos de los libros que tienen un precio que está por encima del precio promedio de los libros publicados en el mismo año y del mismo género.
+
+
+resumen de funciones
+-- Funciones de agregado
+-- AVG: Devuelve el promedio de los valores de una columna.
+-- COUNT: Devuelve el número de filas que coinciden con el criterio especificado.
+-- MAX: Devuelve el valor máximo de una columna.
+-- MIN: Devuelve el valor mínimo de una columna.
+-- SUM: Devuelve la suma de los valores de una columna.
+-- STRING_AGG: Concatena los valores de una columna en una cadena, separados por un delimitador.tambien group_concat()
+-- Funciones de ventana
+-- ROW_NUMBER: Asigna un número de fila a cada fila en el conjunto de resultados de una consulta.
+--GROUP BY
+-- HAVING que se usa para filtrar los resultados de una agrupación.
+-- PARTITION BY que se usa para dividir el conjunto de resultados en particiones
+-- ORDER BY que se usa para especificar el orden de las filas en cada partición.
+--- WHERE que se usa para filtrar filas antes de que se aplique la función de ventana.
+-- LIKE que se usa para filtrar filas que coinciden con un patrón.

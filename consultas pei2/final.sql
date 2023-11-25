@@ -433,6 +433,8 @@ SELECT DISTINCT
  titulo_peliculas_caratulas
 FROM public."auxiliar_alojadas";
 
+
+
 -- selecionamos 20 alojadas aleatorios
 --SELECT * FROM public."Alojadas" ORDER BY random() LIMIT 20;
 
@@ -441,26 +443,33 @@ FROM public."auxiliar_alojadas";
 
 -- ON UPDATE CASCADE
 
+
 --1.Mostrar el nombre de los directores nacidos en 1970. Construir la expresión equivalente en álgebra relacional. 
 --SELECT DISTINCT d."nombre_Personal",p.anio_nacimiento FROM public."Directores" d JOIN public."Personal" p ON d."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = 1970;
+
 --2. Mostrar todos los idiomas de las películas, junto al número de películas que hay en ese idioma. La salida debe de estar ordenada del idioma con más películas al que tiene menos. Construir la expresión equivalente en álgebra relacional.
 --SELECT DISTINCT p.idioma, COUNT(*) AS NumPeliculas FROM public."Peliculas" p GROUP BY p.idioma ORDER BY NumPeliculas DESC;
 --3. Mostrar el nombre del actor o actores más jóvenes junto a su año de nacimiento
 --SELECT DISTINCT a."nombre_Personal", p.anio_nacimiento FROM public."Actores" a JOIN public."Personal" p ON a."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = (SELECT MIN(anio_nacimiento) FROM public."Personal");
 --4. Mostrar el nombre de los actores que aparezcan en más de una película junto con  el número de películas en las cuales ha actuado. Construir la expresión equivalente en álgebra relacional
---NO FUNCIONA 
-SELECT DISTINCT a."nombre_Personal", COUNT(*) AS NumPeliculas FROM public."Actores" a JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" GROUP BY a."nombre_Personal" HAVING COUNT(*) > 1;
+
+--SELECT DISTINCT a."nombre_Personal", COUNT(*) AS NumPeliculas FROM public."Actores" a JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" GROUP BY a."nombre_Personal" HAVING COUNT(*) > 1;
 --5. Mostrar un listado de géneros con la cantidad de películas pertenecientes al mismo, ordenados por los que tienen más películas a los que tienen menos
 --SELECT DISTINCT p.genero, COUNT(*) AS NumPeliculas FROM public."Peliculas" p GROUP BY p.genero ORDER BY NumPeliculas DESC;
-
+--sale un poco raro porque los generos es un text
 --6. Mostrar el nombre de todos guionistas que han trabajado en películas de género de deportes y cine negro
---SELECT 
+
 --7. Solicitar los actores que hayan actuado en películas en idioma japonés y tengan una duración inferior a 100 minutos y cuyo año de nacimiento sea inferior a 1960. a salida mostrará el actor, el papel que hay interpretado en la película, así como el título, año, idioma, y duración de la misma. Construir la expresión equivalente en álgebra relacional
-
+--
 --8. Mostrar la información de las películas que cuentan con al menos 2 carátulas. La  salida será: Título, año de lanzamiento, idioma, duración, calificación y número  que carátulas que tiene
-
+--
 --9. Mostrar el título y año de lanzamiento de las 3 películas con mayor puntuación  media de entre todas las críticas. Mostrar también dicha puntuación media
-
+--
 --10. Determinar el género o géneros cuyas películas tengan una puntuación media más  baja. Mostrar también dicha puntuación medi
-
+--
 ROLLBACK;
+
+
+
+
+

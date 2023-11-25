@@ -93,6 +93,7 @@ JOIN fabricante f ON p.codigo_fabricante = f.codigo WHERE p.precio = (SELECT MAX
 -- 42. Devuelve una lista de todos los productos del fabricante Lenovo.
 SELECT nombre from producto WHERE codigo_fabricante = (SELECT codigo FROM fabricante WHERE nombre ='Fabricante1');
 -- 43. Devuelve una lista de todos los productos del fabricante Crucial que tengan un precio mayor que 200€.
+
 -- 44. Devuelve un listado con todos los productos de los fabricantes Asus, Hewlett-Packard y Seagate. Sin utilizar el operador IN.
 -- 45. Devuelve un listado con todos los productos de los fabricantes Asus, Hewlett-Packard y Seagate. Utilizando el operador IN.
 -- 46. Devuelve un listado con el nombre y el precio de todos los productos de los fabricantes cuyo nombre termine por la vocal e.
