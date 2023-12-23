@@ -351,23 +351,27 @@ CREATE TABLE IF NOT EXISTS public."Caratulas"
     tamanio text ,
     anio_peliculas integer NOT NULL,
     titulo_peliculas text NOT NULL,
+    pagina_web_pagina_web text,
     CONSTRAINT "Caratulas_pk" PRIMARY KEY (nombre_caratula, anio_peliculas, titulo_peliculas),
+    CONSTRAINT "fk_Paginaweb" FOREIGN KEY (pagina_web_pagina_web)
+        REFERENCES public."Paginaweb" (pagina_web) MATCH SIMPLE,
     CONSTRAINT "fk_Peliculas" FOREIGN KEY (anio_peliculas, titulo_peliculas)
         REFERENCES public."Peliculas" (anio, titulo) MATCH SIMPLE
         
 );
 
 --insertamos en la tabla caratulas desde la tabla auxiliar_caratulas
-INSERT INTO public."Caratulas" (nombre_caratula, tamanio, anio_peliculas, titulo_peliculas)
+INSERT INTO public."Caratulas" (nombre_caratula, tamanio, anio_peliculas, titulo_peliculas, pagina_web_pagina_web)
 SELECT DISTINCT
  nombre_caratula,
  --cambiar donde lo encuentre de caratula_mediana a caratula mediana
      REGEXP_REPLACE(tamanio, '(\w+)_(\w+)', '\1') AS tamanio,
  anio_peliculas,
- titulo_peliculas
+ titulo_peliculas,
+    CONCAT(REPLACE(pagina_web_pagina_web, 'https.//', 'https://'), '/') AS pagina_web_pagina_web
 FROM public."auxiliar_caratulas";
 -- selecionamos 20 caratulas aleatorios
---SELECT * FROM public."Caratulas" ORDER BY random() LIMIT 20;
+SELECT * FROM public."Caratulas" ORDER BY random() LIMIT 20;
 
 
 
@@ -455,35 +459,42 @@ FROM public."auxiliar_alojadas";
 
 \echo "---------------------- Consultas -----------------"
 
--- ON UPDATE CASCADE
-\echo "1. Mostrar el nombre de los directores nacidos en 1970. Construir la expresión equivalente en álgebra relacional."--1.Mostrar el nombre de los directores nacidos en 1970. Construir la expresión equivalente en álgebra relacional. 
-SELECT DISTINCT d."nombre_Personal",p.anio_nacimiento FROM public."Directores" d JOIN public."Personal" p ON d."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = 1970;
+---1---
+\echo "1. Mostrar el nombre de los directores nacidos en 1970. Construir la expresión equivalente en álgebra relacional."
+SELECT DISTINCT d."nombre_Personal",p.anio_nacimiento 
+FROM public."Directores" d JOIN public."Personal" p ON d."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = 1970;
 --π_nombre_Personal(σ_anio_nacimiento=1970(π_nombre_Personal(Ρ_nombre_Personal, Directores ⨝_(nombre_Personal = nombre) Personal)))
 
+---2---
 \echo "2. Mostrar todos los idiomas de las películas, junto al número de películas que hay en ese idioma. La salida debe de estar ordenada del idioma con más películas al que tiene menos. Construir la expresión equivalente en álgebra relacional."--2. Mostrar todos los idiomas de las películas, junto al número de películas que hay en ese idioma. La salida debe de estar ordenada del idioma con más películas al que tiene menos. Construir la expresión equivalente en álgebra relacional.
-SELECT DISTINCT p.idioma, COUNT(*) AS NumPeliculas FROM public."Peliculas" p GROUP BY p.idioma ORDER BY NumPeliculas DESC;
+SELECT DISTINCT p.idioma, COUNT(*) AS NumPeliculas 
+FROM public."Peliculas" p GROUP BY p.idioma ORDER BY NumPeliculas DESC;
+
+---3---
 \echo "3. Mostrar el nombre del actor o actores más jóvenes junto a su año de nacimiento"--3. Mostrar el nombre del actor o actores más jóvenes junto a su año de nacimiento
-SELECT DISTINCT a."nombre_Personal", p.anio_nacimiento FROM public."Actores" a JOIN public."Personal" p ON a."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = (SELECT MIN(anio_nacimiento) FROM public."Personal");
+SELECT DISTINCT a."nombre_Personal", p.anio_nacimiento 
+FROM public."Actores" a JOIN public."Personal" p ON a."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = (SELECT MIN(anio_nacimiento) FROM public."Personal");
+
+---4---
 \echo "4. Mostrar el nombre de los actores que aparezcan en más de una película junto con  el número de películas en las cuales ha actuado. Construir la expresión equivalente en álgebra relacional"--4. Mostrar el nombre de los actores que aparezcan en más de una película junto con  el número de películas en las cuales ha actuado. Construir la expresión equivalente en álgebra relacional
+SELECT DISTINCT a."nombre_Personal", COUNT(*) AS NumPeliculas 
+FROM public."Actores" a JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" GROUP BY a."nombre_Personal" HAVING COUNT(*) > 1;
 
-SELECT DISTINCT a."nombre_Personal", COUNT(*) AS NumPeliculas FROM public."Actores" a JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" GROUP BY a."nombre_Personal" HAVING COUNT(*) > 1;
+---5---
 \echo "5. Mostrar un listado de géneros con la cantidad de películas pertenecientes al mismo, ordenados por los que tienen más películas a los que tienen menos"--5. Mostrar un listado de géneros con la cantidad de películas pertenecientes al mismo, ordenados por los que tienen más películas a los que tienen menos
+SELECT DISTINCT p.genero, COUNT(*) AS NumPeliculas 
+FROM public."Peliculas" p GROUP BY p.genero ORDER BY NumPeliculas DESC;
 
---SELECT DISTINCT p.genero, COUNT(*) AS NumPeliculas FROM public."Peliculas" p GROUP BY p.genero ORDER BY NumPeliculas DESC;
-
---sale un poco raro porque los generos es un text
-
-
+---6---
 \echo "--6. Mostrar el nombre de todos guionistas que han trabajado en películas de género de deportes y cine negro"
-
 SELECT  g."nombre_Personal"
 FROM "Guionistas" g
 JOIN "Guionizan" gz ON gz."nombre_Personal_Guionistas" = g."nombre_Personal"
 JOIN public."Peliculas" p ON gz."titulo_Peliculas" = p.titulo
 WHERE p.genero = 'Sport' OR p.genero = 'Film-Noir';
 
+---7---
 \echo "--7. Solicitar los actores que hayan actuado en películas en idioma japonés y tengan una duración inferior a 100 minutos y cuyo año de nacimiento sea inferior a 1960. a salida mostrará el actor, el papel que hay interpretado en la película, así como el título, año, idioma, y duración de la misma. Construir la expresión equivalente en álgebra relacional"
-
 SELECT DISTINCT a."nombre_Personal", ac."nombre_Personaje", p.titulo, p.anio, p.idioma, p.duracion 
 FROM public."Actores" a 
 JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" 
@@ -491,18 +502,19 @@ JOIN public."Peliculas" p ON ac."titulo_Peliculas" = p.titulo AND ac."anio_Pelic
 JOIN public."Personal" pe ON a."nombre_Personal" = pe."nombre"
 WHERE p.idioma = 'ja' AND p.duracion < 100 AND pe.anio_nacimiento < 1960;
 
+---8---
 \echo "8. Mostrar la información de las películas que cuentan con al menos 2 carátulas. La  salida será: Título, año de lanzamiento, idioma, duración, calificación y número  que carátulas que tiene"
 
-
+---9---
 \echo "9. Mostrar el título y año de lanzamiento de las 3 películas con mayor puntuación  media de entre todas las críticas. Mostrar también dicha puntuación media"
+SELECT  p.titulo, p.anio, AVG(c.puntuacion) AS PuntuacionMedia 
+FROM public."Peliculas" p JOIN public."Criticas" c ON p.titulo = c.titulo_peliculas AND p.anio = c.anio_peliculas GROUP BY p.titulo, p.anio ORDER BY PuntuacionMedia DESC LIMIT 3;
 
-SELECT  p.titulo, p.anio, AVG(c.puntuacion) AS PuntuacionMedia FROM public."Peliculas" p JOIN public."Criticas" c ON p.titulo = c.titulo_peliculas AND p.anio = c.anio_peliculas GROUP BY p.titulo, p.anio ORDER BY PuntuacionMedia DESC LIMIT 3;
---SELECT Intelligent Lives, Thani Oruvan, The Intouchables
---SELECT * FROM public."Criticas" WHERE titulo_peliculas = 'Intelligent Lives' OR titulo_peliculas = 'Thani Oruvan' OR titulo_peliculas = 'The Intouchables';
-
+---10---
 \echo 10. Determinar el género o géneros cuyas películas tengan una puntuación media más  baja. Mostrar también dicha puntuación medi
 
-SELECT DISTINCT p.genero, AVG(c.puntuacion) AS PuntuacionMedia FROM public."Peliculas" p JOIN public."Criticas" c ON p.titulo = c.titulo_peliculas AND p.anio = c.anio_peliculas GROUP BY p.genero ORDER BY PuntuacionMedia ASC LIMIT 5;
+SELECT DISTINCT p.genero, AVG(c.puntuacion) AS PuntuacionMedia 
+FROM public."Peliculas" p JOIN public."Criticas" c ON p.titulo = c.titulo_peliculas AND p.anio = c.anio_peliculas GROUP BY p.genero ORDER BY PuntuacionMedia ASC LIMIT 5;
 
 
 ------------------------------------------------------------------------------------------------------------------------
