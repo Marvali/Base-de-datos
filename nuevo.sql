@@ -44,3 +44,4 @@ CREATE TABLE peliculas(
 
 \copy peliculas(anio,titulo,generos,puntuacion,duracion,idioma,calificacion) from 'C:\Users\isaac\Documents\GitHub\Base-de-datos\peliculas.csv' delimiter ',' csv header;
  --select * from peliculas where puntuacion>8.5;    
+

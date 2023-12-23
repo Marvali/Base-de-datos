@@ -1,6 +1,26 @@
+------------------------------------------------------------------------------------------------------------------------
+----                                              CABECERA                                                          ----
+------------------------------------------------------------------------------------------------------------------------
+-- Nombres de los integrantes del grupo:
+-- 1. Isaac Marval Hernandez
+-- 2. Pedro 
+------------------------------------------------------------------------------------------------------------------------
+----                                              Entrega PL3                                                       ----
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
 BEGIN;
 \pset pager off
 
+------------------------------------------------------------------------------------------------------------------------
+----                                              CREACION DE TABLAS                                                ----
+------------------------------------------------------------------------------------------------------------------------
+
+\echo "---------------------- Creacion de tablas -----------------"
 
 CREATE TABLE IF NOT EXISTS public."auxiliar_personal"
 (  
@@ -11,12 +31,13 @@ anio_muerte integer
 
 CREATE TABLE IF NOT EXISTS public."auxiliar_directores"
 (
-nombre_director text NOT NULL,
-anioestreno integer,
-titulo text,
-ano_nacimiento_director text, -- quitar los /N para limpiar los datos
-ano_fallecimiento_director text 
+    nombre_director text NOT NULL,
+    anioestreno integer,
+    titulo text,
+    ano_nacimiento_director text, -- quitar los /N para limpiar los datos
+    ano_fallecimiento_director text 
 );
+
 \copy auxiliar_directores(anioestreno,titulo,nombre_director,ano_nacimiento_director,ano_fallecimiento_director) from './csv/directores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --SELECT * FROM public.auxiliar_directores;
 
@@ -30,6 +51,7 @@ ano_nacimiento_actor text, -- quitar los /N para limpiar los datos
 ano_fallecimiento_actor text,
 nombre_personaje text
 );
+
 \copy auxiliar_actores(anioestreno_pelicula,titulo_pelicula,nombre_actor,ano_nacimiento_actor,ano_fallecimiento_actor,nombre_personaje) from './csv/actores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --SELECT * FROM public.auxiliar_actores;
 
@@ -52,21 +74,6 @@ CREATE TABLE IF NOT EXISTS public."Personal"
     CONSTRAINT "Personal_pk" PRIMARY KEY (nombre)
 );
 
--- FORMA PASO A PASO, dejar comentada, se hace con el comando UNION mas abajo
--- Union de directores
---INSERT INTO public."auxiliar_personal" (nombre, anio_nacimiento, anio_muerte)
---SELECT DISTINCT nombre_director, CAST(NULLIF(ano_nacimiento_director, '\N') AS INTEGER), CAST(NULLIF(ano_fallecimiento_director, '\N') AS INTEGER)
---FROM public."auxiliar_directores";
-
--- Union de actores
---INSERT INTO public."auxiliar_personal" (nombre, anio_nacimiento, anio_muerte)
---SELECT DISTINCT nombre_actor, CAST(NULLIF(ano_nacimiento_actor, '\N') AS INTEGER), CAST(NULLIF(ano_fallecimiento_actor, '\N') AS INTEGER)
---FROM public."auxiliar_actores";
-
--- Union de guionistas
---INSERT INTO public."auxiliar_personal" (nombre, anio_nacimiento, anio_muerte)
---SELECT DISTINCT nombre_guionista, CAST(NULLIF(ano_nacimiento_guionista, '\N') AS INTEGER), CAST(NULLIF(ano_fallecimiento_guionista, '\N') AS INTEGER)
---FROM public."auxiliar_guionistas";
 
 -- Usando el commando UNION
 
@@ -156,6 +163,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_peliculas"
     nombre_personal_directores text,
     genero text
 );
+
 \copy auxiliar_peliculas(anio,titulo,genero,idioma,duracion,calificacion) from './csv/peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 
 
@@ -175,6 +183,7 @@ CREATE TABLE IF NOT EXISTS public."Peliculas"
         REFERENCES public."Directores" ("nombre_Personal") MATCH SIMPLE
         
 );
+
 INSERT INTO "Peliculas" (anio, titulo, idioma, duracion, calificacion, nombre_personal_directores, genero)
 SELECT 
     anio, 
@@ -217,7 +226,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_actuan"
     ano_fallecimiento_actor text
 );
 --copiamos los datos del csv a la tabla auxiliar_actuan
-\copy auxiliar_actuan(anio_peliculas,titulo_peliculas,nombre_personal_actores,anio_nacimiento_actor,ano_fallecimiento_actor,nombre_personaje) from './csv/actores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
+\copy auxiliar_actuan(anio_peliculas,titulo_peliculas,nombre_personal_actores,anio_nacimiento_actor,ano_fallecimiento_actor,nombre_personaje)  from './csv/actores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 
 CREATE TABLE IF NOT EXISTS public."Actuan"
 (
@@ -440,43 +449,161 @@ FROM public."auxiliar_alojadas";
 --SELECT * FROM public."Alojadas" ORDER BY random() LIMIT 20;
 
 
+------------------------------------------------------------------------------------------------------------------------
+----                                              CONSULTAS                                                         ----
+------------------------------------------------------------------------------------------------------------------------
 
+\echo "---------------------- Consultas -----------------"
 
 -- ON UPDATE CASCADE
-
---1.Mostrar el nombre de los directores nacidos en 1970. Construir la expresión equivalente en álgebra relacional. 
---SELECT DISTINCT d."nombre_Personal",p.anio_nacimiento FROM public."Directores" d JOIN public."Personal" p ON d."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = 1970;
+\echo "1. Mostrar el nombre de los directores nacidos en 1970. Construir la expresión equivalente en álgebra relacional."--1.Mostrar el nombre de los directores nacidos en 1970. Construir la expresión equivalente en álgebra relacional. 
+SELECT DISTINCT d."nombre_Personal",p.anio_nacimiento FROM public."Directores" d JOIN public."Personal" p ON d."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = 1970;
 --π_nombre_Personal(σ_anio_nacimiento=1970(π_nombre_Personal(Ρ_nombre_Personal, Directores ⨝_(nombre_Personal = nombre) Personal)))
 
---2. Mostrar todos los idiomas de las películas, junto al número de películas que hay en ese idioma. La salida debe de estar ordenada del idioma con más películas al que tiene menos. Construir la expresión equivalente en álgebra relacional.
---SELECT DISTINCT p.idioma, COUNT(*) AS NumPeliculas FROM public."Peliculas" p GROUP BY p.idioma ORDER BY NumPeliculas DESC;
---3. Mostrar el nombre del actor o actores más jóvenes junto a su año de nacimiento
---SELECT DISTINCT a."nombre_Personal", p.anio_nacimiento FROM public."Actores" a JOIN public."Personal" p ON a."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = (SELECT MIN(anio_nacimiento) FROM public."Personal");
---4. Mostrar el nombre de los actores que aparezcan en más de una película junto con  el número de películas en las cuales ha actuado. Construir la expresión equivalente en álgebra relacional
+\echo "2. Mostrar todos los idiomas de las películas, junto al número de películas que hay en ese idioma. La salida debe de estar ordenada del idioma con más películas al que tiene menos. Construir la expresión equivalente en álgebra relacional."--2. Mostrar todos los idiomas de las películas, junto al número de películas que hay en ese idioma. La salida debe de estar ordenada del idioma con más películas al que tiene menos. Construir la expresión equivalente en álgebra relacional.
+SELECT DISTINCT p.idioma, COUNT(*) AS NumPeliculas FROM public."Peliculas" p GROUP BY p.idioma ORDER BY NumPeliculas DESC;
+\echo "3. Mostrar el nombre del actor o actores más jóvenes junto a su año de nacimiento"--3. Mostrar el nombre del actor o actores más jóvenes junto a su año de nacimiento
+SELECT DISTINCT a."nombre_Personal", p.anio_nacimiento FROM public."Actores" a JOIN public."Personal" p ON a."nombre_Personal" = p.nombre WHERE p.anio_nacimiento = (SELECT MIN(anio_nacimiento) FROM public."Personal");
+\echo "4. Mostrar el nombre de los actores que aparezcan en más de una película junto con  el número de películas en las cuales ha actuado. Construir la expresión equivalente en álgebra relacional"--4. Mostrar el nombre de los actores que aparezcan en más de una película junto con  el número de películas en las cuales ha actuado. Construir la expresión equivalente en álgebra relacional
 
---SELECT DISTINCT a."nombre_Personal", COUNT(*) AS NumPeliculas FROM public."Actores" a JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" GROUP BY a."nombre_Personal" HAVING COUNT(*) > 1;
---5. Mostrar un listado de géneros con la cantidad de películas pertenecientes al mismo, ordenados por los que tienen más películas a los que tienen menos
+SELECT DISTINCT a."nombre_Personal", COUNT(*) AS NumPeliculas FROM public."Actores" a JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" GROUP BY a."nombre_Personal" HAVING COUNT(*) > 1;
+\echo "5. Mostrar un listado de géneros con la cantidad de películas pertenecientes al mismo, ordenados por los que tienen más películas a los que tienen menos"--5. Mostrar un listado de géneros con la cantidad de películas pertenecientes al mismo, ordenados por los que tienen más películas a los que tienen menos
+
 --SELECT DISTINCT p.genero, COUNT(*) AS NumPeliculas FROM public."Peliculas" p GROUP BY p.genero ORDER BY NumPeliculas DESC;
+
 --sale un poco raro porque los generos es un text
---6. Mostrar el nombre de todos guionistas que han trabajado en películas de género de deportes y cine negro
 
---7. Solicitar los actores que hayan actuado en películas en idioma japonés y tengan una duración inferior a 100 minutos y cuyo año de nacimiento sea inferior a 1960. a salida mostrará el actor, el papel que hay interpretado en la película, así como el título, año, idioma, y duración de la misma. Construir la expresión equivalente en álgebra relacional
---SELECT DISTINCT a."nombre_Personal", ac."nombre_Personaje", p.titulo, p.anio, p.idioma, p.duracion 
---FROM public."Actores" a 
---JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" 
---JOIN public."Peliculas" p ON ac."titulo_Peliculas" = p.titulo AND ac."anio_Peliculas" = p.anio 
---JOIN public."Personal" pe ON a."nombre_Personal" = pe."nombre"
---WHERE p.idioma = 'ja' AND p.duracion < 100 AND pe.anio_nacimiento < 1960;--8. Mostrar la información de las películas que cuentan con al menos 2 carátulas. La  salida será: Título, año de lanzamiento, idioma, duración, calificación y número  que carátulas que tiene
 
---
---9. Mostrar el título y año de lanzamiento de las 3 películas con mayor puntuación  media de entre todas las críticas. Mostrar también dicha puntuación media
+\echo "--6. Mostrar el nombre de todos guionistas que han trabajado en películas de género de deportes y cine negro"
 
---SELECT  p.titulo, p.anio, AVG(c.puntuacion) AS PuntuacionMedia FROM public."Peliculas" p JOIN public."Criticas" c ON p.titulo = c.titulo_peliculas AND p.anio = c.anio_peliculas GROUP BY p.titulo, p.anio ORDER BY PuntuacionMedia DESC LIMIT 3;
+SELECT  g."nombre_Personal"
+FROM "Guionistas" g
+JOIN "Guionizan" gz ON gz."nombre_Personal_Guionistas" = g."nombre_Personal"
+JOIN public."Peliculas" p ON gz."titulo_Peliculas" = p.titulo
+WHERE p.genero = 'Sport' OR p.genero = 'Film-Noir';
+
+\echo "--7. Solicitar los actores que hayan actuado en películas en idioma japonés y tengan una duración inferior a 100 minutos y cuyo año de nacimiento sea inferior a 1960. a salida mostrará el actor, el papel que hay interpretado en la película, así como el título, año, idioma, y duración de la misma. Construir la expresión equivalente en álgebra relacional"
+
+SELECT DISTINCT a."nombre_Personal", ac."nombre_Personaje", p.titulo, p.anio, p.idioma, p.duracion 
+FROM public."Actores" a 
+JOIN public."Actuan" ac ON a."nombre_Personal" = ac."nombre_Personal_Actores" 
+JOIN public."Peliculas" p ON ac."titulo_Peliculas" = p.titulo AND ac."anio_Peliculas" = p.anio 
+JOIN public."Personal" pe ON a."nombre_Personal" = pe."nombre"
+WHERE p.idioma = 'ja' AND p.duracion < 100 AND pe.anio_nacimiento < 1960;
+
+\echo "8. Mostrar la información de las películas que cuentan con al menos 2 carátulas. La  salida será: Título, año de lanzamiento, idioma, duración, calificación y número  que carátulas que tiene"
+
+
+\echo "9. Mostrar el título y año de lanzamiento de las 3 películas con mayor puntuación  media de entre todas las críticas. Mostrar también dicha puntuación media"
+
+SELECT  p.titulo, p.anio, AVG(c.puntuacion) AS PuntuacionMedia FROM public."Peliculas" p JOIN public."Criticas" c ON p.titulo = c.titulo_peliculas AND p.anio = c.anio_peliculas GROUP BY p.titulo, p.anio ORDER BY PuntuacionMedia DESC LIMIT 3;
 --SELECT Intelligent Lives, Thani Oruvan, The Intouchables
 --SELECT * FROM public."Criticas" WHERE titulo_peliculas = 'Intelligent Lives' OR titulo_peliculas = 'Thani Oruvan' OR titulo_peliculas = 'The Intouchables';
---10. Determinar el género o géneros cuyas películas tengan una puntuación media más  baja. Mostrar también dicha puntuación medi
---SELECT DISTINCT p.genero, AVG(c.puntuacion) AS PuntuacionMedia FROM public."Peliculas" p JOIN public."Criticas" c ON p.titulo = c.titulo_peliculas AND p.anio = c.anio_peliculas GROUP BY p.genero ORDER BY PuntuacionMedia ASC LIMIT 5;
+
+\echo 10. Determinar el género o géneros cuyas películas tengan una puntuación media más  baja. Mostrar también dicha puntuación medi
+
+SELECT DISTINCT p.genero, AVG(c.puntuacion) AS PuntuacionMedia FROM public."Peliculas" p JOIN public."Criticas" c ON p.titulo = c.titulo_peliculas AND p.anio = c.anio_peliculas GROUP BY p.genero ORDER BY PuntuacionMedia ASC LIMIT 5;
+
+
+------------------------------------------------------------------------------------------------------------------------
+----                                    CREACION DE USUARIOS Y TRIGGERS                                             ----
+------------------------------------------------------------------------------------------------------------------------
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+----                                              TRIGGERS                                                          ----
+------------------------------------------------------------------------------------------------------------------------
+\echo "---------------------- Creacion de usuarios y triggers -----------------"
+
+------   Crear tabla auditoria  ------
+
+CREATE TABLE auditoria(
+    operation char(1),
+    stamp     timestamp,
+    userid    text,
+    last_date timestamp,
+    last_user text    
+);
+ 
+
+
+
+------   Crear funcion para auditoria ------
+CREATE OR REPLACE FUNCTION peliculas_stamp() RETURNS TRIGGER AS $audit_peliculas$
+BEGIN
+  IF TG_OP = 'UPDATE' THEN                                                                                              -- TG_TOP es una variable que contiene la operacion que se esta realizando
+    INSERT INTO auditoria(last_date, operation, stamp, userid, last_user)
+    VALUES (current_timestamp, 'U', now(), current_user, NEW);
+  ELSIF TG_OP = 'DELETE' THEN
+    INSERT INTO auditoria(last_date, operation, stamp, userid, last_user)
+    VALUES (current_timestamp, 'D', now(), current_user, OLD);
+  ELSIF TG_OP = 'INSERT' THEN
+    INSERT INTO auditoria(last_date, operation, stamp, userid, last_user)
+    VALUES (current_timestamp, 'I', now(), current_user, NEW);
+  END IF;
+  RETURN NULL; -- result is ignored since this is an AFTER trigger
+END;
+$audit_peliculas$ LANGUAGE plpgsql;
+
+
+------   Crear trigger para auditoria ------
+
+CREATE TRIGGER peliculas_stamp BEFORE INSERT OR UPDATE ON "Peliculas"
+    FOR EACH ROW EXECUTE FUNCTION peliculas_stamp();
+
+
+
+
+------   Pruebas de auditoria ------
+
+\echo "----- Pruebas de auditoria -----"
+\echo "INSERT INTO "Peliculas" (anio, titulo, idioma, duracion, calificacion, nombre_personal_directores, genero)" 
+\echo "VALUES (2021, 'The Intouchables', 'en', 112, 'R', 'Enno Patalas', 'Biography, Comedy, Drama');"
+
+INSERT INTO "Peliculas" (anio, titulo, idioma, duracion, calificacion, nombre_personal_directores, genero)
+VALUES (2021, 'The Intouchables', 'en', 112, 'R', 'Enno Patalas', 'Biography, Comedy, Drama');
+
+\echo "------- Resultado de auditoria -------"
+SELECT * FROM auditoria;
+
+
+
+------   Crear funcion para introducir pagina web ------
+
+
+CREATE OR REPLACE FUNCTION check_webpage() RETURNS TRIGGER AS $pagina_cambio$
+BEGIN
+    IF NEW.webpage IS NULL THEN
+    INSERT INTO webpages (webpage) VALUES (NEW.webpage);
+  END IF;
+  RETURN NEW;
+END;
+$pagina_cambio$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER check_webpage_after_insert
+AFTER INSERT ON "Caratulas"
+FOR EACH ROW EXECUTE FUNCTION check_webpage();
+
+CREATE TRIGGER check_webpage_after_insert
+AFTER INSERT ON "Criticas"
+FOR EACH ROW EXECUTE FUNCTION check_webpage();
+
+\echo "------- Pruebas de pagina web -------"
+\echo "INSERT INTO "Caratulas" (nombre_caratula, tamanio, anio_peliculas, titulo_peliculas)"
+\echo "VALUES ('The Intouchables', 'Carátula_mediana', 2021, 'The Intouchables');"
+
+INSERT INTO "Caratulas" (nombre_caratula, tamanio, anio_peliculas, titulo_peliculas)
+VALUES ('Hellboy', 'Carátula_mediana', 2004, 'Hellboy');
+
+
+
+
+
+
 ROLLBACK;
+
 
 
 
