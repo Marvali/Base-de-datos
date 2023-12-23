@@ -1,1 +1,0 @@
---6. Mostrar el nombre de todos guionistas que han trabajado en películas de género de deportes y cine negro
