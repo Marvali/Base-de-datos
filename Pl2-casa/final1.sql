@@ -582,32 +582,33 @@ SELECT * FROM auditoria;
 
 
 ------   Crear funcion para introducir pagina web ------
-
+--CREATE TABLE IF NOT EXISTS public."Paginaweb"
 
 CREATE OR REPLACE FUNCTION check_webpage() RETURNS TRIGGER AS $pagina_cambio$
 BEGIN
-    IF NEW.webpage IS NULL THEN
-    INSERT INTO webpages (webpage) VALUES (NEW.webpage);
-  END IF;
-  RETURN NEW;
+    INSERT INTO public."Paginaweb" (pagina_web) VALUES (NEW.pagina_web_pagina_web);
+    RETURN NEW;
 END;
 $pagina_cambio$ LANGUAGE plpgsql;
 
-
-CREATE TRIGGER check_webpage_after_insert
-AFTER INSERT ON "Caratulas"
+CREATE TRIGGER check_webpage_before_insert
+BEFORE INSERT ON "Caratulas"
 FOR EACH ROW EXECUTE FUNCTION check_webpage();
 
-CREATE TRIGGER check_webpage_after_insert
-AFTER INSERT ON "Criticas"
+CREATE TRIGGER check_webpage_before_insert
+BEFORE INSERT ON "Criticas"
 FOR EACH ROW EXECUTE FUNCTION check_webpage();
 
 \echo "------- Pruebas de pagina web -------"
-\echo "INSERT INTO "Caratulas" (nombre_caratula, tamanio, anio_peliculas, titulo_peliculas)"
-\echo "VALUES ('The Intouchables', 'Carátula_mediana', 2021, 'The Intouchables');"
+\echo "INSERT INTO "Caratulas" (nombre_caratula, tamanio, anio_peliculas, titulo_peliculas, pagina_web_pagina_web)"
+\echo "VALUES ('The Intouchables', 'Carátula_mediana', 2021, 'The Intouchables', 'https://palomitas.com/películas/The Intouchables_Carátula_mediana.jpg');"
 
-INSERT INTO "Caratulas" (nombre_caratula, tamanio, anio_peliculas, titulo_peliculas)
-VALUES ('Hellboy', 'Carátula_mediana', 2004, 'Hellboy');
+INSERT INTO "Caratulas" (nombre_caratula, tamanio, anio_peliculas, titulo_peliculas, pagina_web_pagina_web)
+VALUES ('Hellboy', 'Carátula_mediana', 2004, 'Hellboy', 'https://palomitas.com/películas/hellboy_Carátula_mediana.jpg');
+
+INSERT INTO "Criticas" (anio_peliculas, titulo_peliculas, nombre_critico, puntuacion, texto_critica, pagina_web_pagina_web)
+VALUES (2004, 'Hellboy', 'Roger Ebert', 3.5, 'The movie is entertaining in its own way, but it''s a long way from the top shelf of recent comic book movies.', 'https://www.rogerebert.com/reviews/hellboy-2004');
+
 
 
 
