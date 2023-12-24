@@ -1,3 +1,9 @@
+"""
+CABEZERA
+CREADORES DEL PROGRAMA: Isaac Y Pedro
+
+"""
+
 import sys
 
 import psycopg2
@@ -48,9 +54,9 @@ def ask_conn_parameters():
             port = 5432
             database = 'postgres'
         else:
-            host = input('Introduce el host')
-            port = ask_port('TCP port number: ')
-            database = input('Introduce el nombre de la base de datos')
+            host = input('Introduce el host: ')
+            port = input('TCP port number: ')
+            database = input('Introduce el nombre de la base de datos: ')
 
 
         
@@ -101,6 +107,10 @@ def main():
                     conn.commit()
             except psycopg2.errors.InsufficientPrivilege:
                 print("No tienes permisos para hacer esta operación, intenta con otro usuario")
+            except psycopg2.errors.UndefinedTable:
+                print("La tabla no existe")
+            except psycopg2.errors.SyntaxError:
+                print("Error de sintaxis")
             cur.close()
     except portException:
         print("The port is not valid!")
@@ -108,12 +118,12 @@ def main():
         print("Program interrupted by user.")
     finally:
         print("Program finished")
-if __name__ == "__main__":                                                      # Es el modula principal?
-    if '--test' in sys.argv:                                                    # Si el usuario ha escrito --test
+if __name__ == "__main__":                                                     
+    if '--test' in sys.argv:                                                    
         import doctest                                                           
-        doctest.testmod()                                                       # Ejecuta las pruebas
-    else:                                                                       # else
-        main()                                                                  # ejecuta el programa principal
+        doctest.testmod()                                                      
+    else:                                                                      
+        main()                                                                  
 
 
 

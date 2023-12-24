@@ -3,7 +3,7 @@
 ------------------------------------------------------------------------------------------------------------------------
 -- Nombres de los integrantes del grupo:
 -- 1. Isaac Marval Hernandez
--- 2. Pedro 
+-- 2. Pedro Bustos Sánchez
 ------------------------------------------------------------------------------------------------------------------------
 ----                                              Entrega PL3                                                       ----
 ------------------------------------------------------------------------------------------------------------------------
@@ -371,7 +371,7 @@ SELECT DISTINCT
     CONCAT(REPLACE(pagina_web_pagina_web, 'https.//', 'https://'), '/') AS pagina_web_pagina_web
 FROM public."auxiliar_caratulas";
 -- selecionamos 20 caratulas aleatorios
-SELECT * FROM public."Caratulas" ORDER BY random() LIMIT 20;
+--SELECT * FROM public."Caratulas" ORDER BY random() LIMIT 20;
 
 
 
@@ -504,7 +504,11 @@ WHERE p.idioma = 'ja' AND p.duracion < 100 AND pe.anio_nacimiento < 1960;
 
 ---8---
 \echo "8. Mostrar la información de las películas que cuentan con al menos 2 carátulas. La  salida será: Título, año de lanzamiento, idioma, duración, calificación y número  que carátulas que tiene"
+SELECT DISTINCT p.titulo, p.anio, p.idioma, p.duracion, p.calificacion, COUNT(*) AS NumCaratulas  
+FROM public."Peliculas" p JOIN public."Caratulas" c ON p.titulo = c.titulo_peliculas  
+AND p.anio = c.anio_peliculas GROUP BY p.titulo, p.anio, p.idioma, p.duracion, p.calificacion  
 
+HAVING COUNT(*) > 1; 
 ---9---
 \echo "9. Mostrar el título y año de lanzamiento de las 3 películas con mayor puntuación  media de entre todas las críticas. Mostrar también dicha puntuación media"
 SELECT  p.titulo, p.anio, AVG(c.puntuacion) AS PuntuacionMedia 
@@ -732,7 +736,8 @@ GRANT INSERT, UPDATE, DELETE, SELECT ON ALL TABLES IN SCHEMA public TO administr
 GRANT INSERT, UPDATE, DELETE, SELECT ON ALL TABLES IN SCHEMA public TO gestor;
 --permisos critico
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO critico;
-GRANT INSERT ON public."Criticas" TO critico;
+GRANT INSERT, UPDATE,TR
+
 --permisos cliente
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO cliente;
 
