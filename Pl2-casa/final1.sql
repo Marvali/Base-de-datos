@@ -535,34 +535,75 @@ CREATE TABLE auditoria(
     stamp     timestamp,
     userid    text,
     last_date timestamp,
-    last_user text    
+    last_change text,
+    tabla    text
 );
  
 
 
 
 ------   Crear funcion para auditoria ------
-CREATE OR REPLACE FUNCTION peliculas_stamp() RETURNS TRIGGER AS $audit_peliculas$
+CREATE OR REPLACE FUNCTION auditoria() RETURNS TRIGGER AS $audit$
 BEGIN
-  IF TG_OP = 'UPDATE' THEN                                                                                              -- TG_TOP es una variable que contiene la operacion que se esta realizando
-    INSERT INTO auditoria(last_date, operation, stamp, userid, last_user)
-    VALUES (current_timestamp, 'U', now(), current_user, NEW);
+  IF TG_OP = 'UPDATE' THEN
+    INSERT INTO auditoria(last_date, operation, stamp, userid, last_change, tabla)
+    VALUES (current_timestamp, 'U', now(), current_user, NEW, TG_TABLE_NAME);
+    RETURN NEW;
   ELSIF TG_OP = 'DELETE' THEN
-    INSERT INTO auditoria(last_date, operation, stamp, userid, last_user)
-    VALUES (current_timestamp, 'D', now(), current_user, OLD);
+    INSERT INTO auditoria(last_date, operation, stamp, userid, last_change, tabla)
+    VALUES (current_timestamp, 'D', now(), current_user, OLD, TG_TABLE_NAME);
+    RETURN OLD;
   ELSIF TG_OP = 'INSERT' THEN
-    INSERT INTO auditoria(last_date, operation, stamp, userid, last_user)
-    VALUES (current_timestamp, 'I', now(), current_user, NEW);
+    INSERT INTO auditoria(last_date, operation, stamp, userid, last_change, tabla)
+    VALUES (current_timestamp, 'I', now(), current_user, NEW, TG_TABLE_NAME);
+    RETURN NEW;
   END IF;
-  RETURN NULL; -- result is ignored since this is an AFTER trigger
 END;
-$audit_peliculas$ LANGUAGE plpgsql;
+$audit$ LANGUAGE plpgsql;
 
 
-------   Crear trigger para auditoria ------
+------------------------------------------------------------------------------------------------------------------------
+----                                              TRIGGERS                                                          ----
+------------------------------------------------------------------------------------------------------------------------
 
-CREATE TRIGGER peliculas_stamp BEFORE INSERT OR UPDATE ON "Peliculas"
-    FOR EACH ROW EXECUTE FUNCTION peliculas_stamp();
+
+CREATE TRIGGER peliculas_auditoria BEFORE INSERT OR UPDATE ON "Peliculas"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER personal_auditoria BEFORE INSERT OR UPDATE ON "Personal"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER actores_auditoria BEFORE INSERT OR UPDATE ON "Actores"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER directores_auditoria BEFORE INSERT OR UPDATE ON "Directores"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER guionistas_auditoria BEFORE INSERT OR UPDATE ON "Guionistas"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER actuan_auditoria BEFORE INSERT OR UPDATE ON "Actuan"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER guionizan_auditoria BEFORE INSERT OR UPDATE ON "Guionizan"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER paginaweb_auditoria BEFORE INSERT OR UPDATE ON "Paginaweb"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER caratulas_auditoria BEFORE INSERT OR UPDATE ON "Caratulas"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER criticas_auditoria BEFORE INSERT OR UPDATE ON "Criticas"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+CREATE TRIGGER alojadas_auditoria BEFORE INSERT OR UPDATE ON "Alojadas"
+    FOR EACH ROW EXECUTE FUNCTION auditoria();
+
+
+
+
+
 
 
 
@@ -575,6 +616,13 @@ CREATE TRIGGER peliculas_stamp BEFORE INSERT OR UPDATE ON "Peliculas"
 
 INSERT INTO "Peliculas" (anio, titulo, idioma, duracion, calificacion, nombre_personal_directores, genero)
 VALUES (2021, 'The Intouchables', 'en', 112, 'R', 'Enno Patalas', 'Biography, Comedy, Drama');
+
+INSERT INTO "Personal" (nombre, anio_nacimiento, anio_muerte)
+VALUES ('EnnoS PatalasS', 1932, 2018);
+
+INSERT INTO "Actores" ("nombre_Personal")
+VALUES ('EnnoS PatalasS');
+
 
 \echo "------- Resultado de auditoria -------"
 SELECT * FROM auditoria;
@@ -611,11 +659,89 @@ VALUES (2004, 'Hellboy', 'Roger Ebert', 3.5, 'The movie is entertaining in its o
 
 
 
+------   Puntuacion media de las peliculas ------
+CREATE TABLE IF NOT EXISTS public.puntuacion_media
+(
+    nombre_pelicula text,
+    puntuacion_media float
+);
+
+
+------   Crear funcion para puntuacion media ------
+
+CREATE OR REPLACE FUNCTION puntuacion_media() RETURNS TRIGGER AS $puntuacion_media$
+BEGIN
+    RAISE NOTICE 'Updating average rating for %', NEW.titulo_peliculas;
+    IF EXISTS (SELECT 1 FROM public.puntuacion_media WHERE nombre_pelicula = NEW.titulo_peliculas) THEN
+        UPDATE public.puntuacion_media
+        SET puntuacion_media = (SELECT AVG(c.puntuacion) 
+        FROM public."Criticas" c WHERE c.titulo_peliculas = NEW.titulo_peliculas AND c.anio_peliculas = NEW.anio_peliculas)
+        WHERE nombre_pelicula = NEW.titulo_peliculas;
+    ELSE
+        INSERT INTO public.puntuacion_media (nombre_pelicula, puntuacion_media)
+        VALUES (NEW.titulo_peliculas, (SELECT AVG(c.puntuacion) 
+        FROM public."Criticas" c WHERE c.titulo_peliculas = NEW.titulo_peliculas AND c.anio_peliculas = NEW.anio_peliculas));
+    END IF;
+    RAISE NOTICE 'Average rating updated to %', (SELECT puntuacion_media FROM public.puntuacion_media WHERE nombre_pelicula = NEW.titulo_peliculas);
+    RETURN NULL;
+END;
+$puntuacion_media$ LANGUAGE plpgsql;
+
+
+------   trigger de puntuacion media ------
+CREATE TRIGGER puntuacion_media
+AFTER INSERT OR UPDATE ON "Criticas"
+FOR EACH ROW EXECUTE FUNCTION puntuacion_media();
+
+
+------   Pruebas de puntuacion media ------
+
+\echo "------- Pruebas de puntuacion media -------"
+\echo " prueba de insercion de pelicula con puntuacion media"
+INSERT INTO "Criticas" (anio_peliculas, titulo_peliculas, nombre_critico, puntuacion, texto_critica, pagina_web_pagina_web)VALUES (2004, 'Hellboy', 'Roger EbertPO', 3.5, 'The movie is entertaining in its own way, but it''s a long way from the top shelf of recent comic book movies.', 'https://www.rogerebertO.com/reviews/hellboy-2004');
+SELECT * FROM public.puntuacion_media;
+
+\echo " prueba de update de todas las criticas"
+
+UPDATE public."Criticas"
+SET puntuacion = puntuacion;
+SELECT * FROM public.puntuacion_media;
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+----                                              USUARIOS                                                          ----
+------------------------------------------------------------------------------------------------------------------------
+
+
+\echo "---------------------- Creacion de usuarios -----------------"
+CREATE USER administrador WITH PASSWORD 'administrador';
+CREATE USER gestor WITH PASSWORD 'gestor';
+CREATE USER critico WITH PASSWORD 'critico';
+CREATE USER cliente WITH PASSWORD 'cliente';
+
+--quitar permsos a los usuarios
+REVOKE ALL PRIVILEGES ON DATABASE postgres FROM administrador;
+REVOKE ALL PRIVILEGES ON DATABASE postgres FROM gestor;
+REVOKE ALL PRIVILEGES ON DATABASE postgres FROM critico;
+REVOKE ALL PRIVILEGES ON DATABASE postgres FROM cliente;
+--permisos administrador
+GRANT ALL PRIVILEGES ON DATABASE postgres TO administrador;
+GRANT INSERT, UPDATE, DELETE, SELECT ON ALL TABLES IN SCHEMA public TO administrador;
+--permisos gestor
+GRANT INSERT, UPDATE, DELETE, SELECT ON ALL TABLES IN SCHEMA public TO gestor;
+--permisos critico
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO critico;
+GRANT INSERT ON public."Criticas" TO critico;
+--permisos cliente
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO cliente;
 
 
 
 
-ROLLBACK;
+
+
+COMMIT;
 
 
 
