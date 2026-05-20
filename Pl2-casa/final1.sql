@@ -9,7 +9,7 @@
 ------------------------------------------------------------------------------------------------------------------------
 
 
-
+--psql -d some_database -U webgui
 
 
 
@@ -540,7 +540,8 @@ CREATE TABLE auditoria(
     userid    text,
     last_date timestamp,
     last_change text,
-    tabla    text
+    tabla    text,
+    PRIMARY KEY (operation, stamp)
 );
  
 
@@ -551,15 +552,15 @@ CREATE OR REPLACE FUNCTION auditoria() RETURNS TRIGGER AS $audit$
 BEGIN
   IF TG_OP = 'UPDATE' THEN
     INSERT INTO auditoria(last_date, operation, stamp, userid, last_change, tabla)
-    VALUES (current_timestamp, 'U', now(), current_user, NEW, TG_TABLE_NAME);
+    VALUES (current_timestamp, 'U', clock_timestamp(), current_user, NEW, TG_TABLE_NAME);
     RETURN NEW;
   ELSIF TG_OP = 'DELETE' THEN
     INSERT INTO auditoria(last_date, operation, stamp, userid, last_change, tabla)
-    VALUES (current_timestamp, 'D', now(), current_user, OLD, TG_TABLE_NAME);
+    VALUES (current_timestamp, 'D', clock_timestamp(), current_user, OLD, TG_TABLE_NAME);
     RETURN OLD;
   ELSIF TG_OP = 'INSERT' THEN
     INSERT INTO auditoria(last_date, operation, stamp, userid, last_change, tabla)
-    VALUES (current_timestamp, 'I', now(), current_user, NEW, TG_TABLE_NAME);
+    VALUES (current_timestamp, 'I', clock_timestamp(), current_user, NEW, TG_TABLE_NAME);
     RETURN NEW;
   END IF;
 END;
@@ -736,7 +737,9 @@ GRANT INSERT, UPDATE, DELETE, SELECT ON ALL TABLES IN SCHEMA public TO administr
 GRANT INSERT, UPDATE, DELETE, SELECT ON ALL TABLES IN SCHEMA public TO gestor;
 --permisos critico
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO critico;
-GRANT INSERT, UPDATE,TR
+GRANT INSERT, UPDATE, DELETE ON public."Criticas" TO critico;
+
+
 
 --permisos cliente
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO cliente;

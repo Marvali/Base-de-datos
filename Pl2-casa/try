@@ -4,6 +4,8 @@ from psycopg2 import OperationalError
 
 OPERATION_QUERY = 'query'
 OPERATION_INSERT = 'insert'
+OPERATION_INSERT_WITH_PARAMS = 'insert_with_params'
+OPERATION_QUERY_WITH_PARAMS = 'query_with_params'
 
 VALID_USERS = {
     1: ('administrador', 'administrador'),
@@ -64,21 +66,38 @@ def ask_conn_parameters():
 
 def menu():
     """Show the menu and ask the user for an option."""
-    print('1. Consulta\n2. Insertar\n0. Salir')
+    print('1. Consulta\n2. Insertar\n3.Consulta por pasos\n4.Insertar por pasos\n0. Salir')
 
-    eleccion = int(input('¿Qué quieres hacer?'))
+    while True:
+        try:
+            eleccion = int(input('¿Qué quieres hacer?'))
+            if eleccion == 1:
+                return input('Introduce la consulta: '), OPERATION_QUERY
+            elif eleccion == 2:
+                return input('Insert de la critica '), OPERATION_INSERT
+            elif eleccion == 4:
+                table_name = input('Introduce el nombre de la tabla: ')
+                num_params = int(input('Introduce el número de condiciones a consultar: '))
 
-    if eleccion == 1:
-        return input('Introduce la consulta: '), OPERATION_QUERY
-    elif eleccion == 2:
-        return input('Introduce la crítica: '), OPERATION_INSERT
-    elif eleccion == 0:
-        sys.exit()
-    else:
-        print('No has introducido una opción válida: ')
-        menu()
+                params = []
+                for i in range(num_params):
+                    param_name = input(f'Introduce el nombre del parámetro {i+1}: ')
+                    param_value = input(f'Introduce el valor del parámetro {i+1}: ')
+                    params.append((param_name, param_value))
 
+                param_conditions = ' AND '.join(f"{name} = '{value}'" for name, value in params)
 
+                query_statement = f"SELECT * FROM {table_name} WHERE {param_conditions}"
+
+                return query_statement, OPERATION_QUERY_WITH_PARAMS
+            elif eleccion == 0:
+                sys.exit()
+            else:
+                print('No has introducido una opción válida: ')
+        except ValueError:
+            print('Por favor, introduce un número.')
+
+         
 def main():
     try:
         connection_params = ask_conn_parameters()
@@ -93,10 +112,17 @@ def main():
             try:
                 cur.execute(operation)
                 if operation_type == OPERATION_QUERY:
-                    for record in cur.fetchall():
+                    for record in cur.fetchall(): 
                         print(record)
                 elif operation_type == OPERATION_INSERT:
                     conn.commit()
+                elif operation_type == OPERATION_QUERY_WITH_PARAMS:
+                    # Handle OPERATION_QUERY_WITH_PARAMS here
+                    
+                    # For example, you might want to fetch and print the results like this:
+                    for record in cur.fetchall():
+                        print(record)
+                    
             except psycopg2.errors.InsufficientPrivilege:
                 print("No tienes permisos para hacer esta operación, intenta con otro usuario")
             except psycopg2.errors.UndefinedTable:
@@ -106,6 +132,9 @@ def main():
             except OperationalError as e:
                 print(f"Could not connect to the database: {e}")
                 return
+            except psycopg2.errors.InFailedSqlTransaction:
+                print("The transaction could not be completed.")
+                conn.rollback()
             finally:
                 cur.close()
     except portException:
@@ -124,3 +153,9 @@ if __name__ == "__main__":
         doctest.testmod()
     else:
         main()
+
+
+
+"""
+INSERT INTO "Criticas" (anio_peliculas, titulo_peliculas, nombre_critico, puntuacion, texto_critica, pagina_web_pagina_web) VALUES (2004, 'Hellboy', 'Roger Ebert', 3.5, 'The movie is entertaining in its own way, but it''s a long way from the top shelf of recent comic book movies.', 'https://www.rogerebert.com/reviews/hellboy-2004');
+"""
