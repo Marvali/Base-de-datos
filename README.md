@@ -24,6 +24,7 @@ sql/peliculas_db.sql   Script único: tablas, carga, consultas, triggers y usuar
 data/                  CSV de entrada (películas, reparto, direcciones, guiones, carátulas, críticas)
 app/cli.py             Cliente de consola en Python
 docs/esquema.md        Modelo de datos y descripción de triggers y roles
+ejercicios/            Material de práctica y versiones previas (histórico)
 ```
 
 ## Cómo ejecutarlo
