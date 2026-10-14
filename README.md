@@ -11,7 +11,7 @@ Proyecto en pareja del grado en Ingeniería en Sistemas de Información (Univers
 | Área | Contenido |
 |---|---|
 | Modelado relacional | 11 tablas con claves primarias compuestas y claves foráneas (películas, personal, actores, directores, guionistas, carátulas, críticas, páginas web…) |
-| ETL en SQL | Carga con `\copy` a tablas auxiliares y depuración con `NULLIF`, `REGEXP_REPLACE`, `SUBSTRING`, `CAST`, `DISTINCT ON`, `UNION` (~10 000 filas en 6 CSV) |
+| ETL en SQL | Carga con `\copy` a tablas auxiliares y depuración con `NULLIF`, `REGEXP_REPLACE`, `SUBSTRING`, `CAST`, `DISTINCT ON`, `UNION` (~8 000 filas en 6 CSV) |
 | Consultas | 10 consultas con `JOIN`, `GROUP BY`, `HAVING`, subconsultas y agregados |
 | PL/pgSQL | Función y triggers de **auditoría** (INSERT/UPDATE/DELETE) sobre todas las tablas, alta automática de páginas web y **puntuación media** recalculada con cada crítica |
 | Seguridad | Cuatro roles (`administrador`, `gestor`, `critico`, `cliente`) con `GRANT`/`REVOKE` según el principio de mínimo privilegio |
