@@ -1,23 +1,22 @@
-------------------------------------------------------------------------------------------------------------------------
-----                                              CABECERA                                                          ----
-------------------------------------------------------------------------------------------------------------------------
--- Nombres de los integrantes del grupo:
--- 1. Isaac Marval Hernandez
--- 2. Pedro Bustos Sánchez
-------------------------------------------------------------------------------------------------------------------------
-----                                              Entrega PL3                                                       ----
-------------------------------------------------------------------------------------------------------------------------
-
-
---psql -d some_database -U webgui
-
-
+-- =============================================================================
+--  Base de datos de películas (PostgreSQL)
+--  Modelo relacional, carga y depuración de datos, consultas, triggers y roles
+--
+--  Autores : Isaac Marval Hernández · Pedro Bustos Sánchez
+--  Contexto: Universidad de Alcalá · Bases de Datos 2023-24 (PECL2 + PECL3)
+--
+--  Uso (desde la raíz del repositorio, para que \copy encuentre ./data/):
+--      psql -U postgres -d postgres -f sql/peliculas_db.sql
+--
+--  Todo se ejecuta en una única transacción (BEGIN ... COMMIT).
+--  Secciones: 1) Tablas y carga  2) Consultas  3) Auditoría y triggers  4) Usuarios
+-- =============================================================================
 
 BEGIN;
 \pset pager off
 
 ------------------------------------------------------------------------------------------------------------------------
-----                                              CREACION DE TABLAS                                                ----
+----                                  1. TABLAS, CARGA Y DEPURACIÓN DE DATOS                               ----
 ------------------------------------------------------------------------------------------------------------------------
 
 \echo "---------------------- Creacion de tablas -----------------"
@@ -38,7 +37,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_directores"
     ano_fallecimiento_director text 
 );
 
-\copy auxiliar_directores(anioestreno,titulo,nombre_director,ano_nacimiento_director,ano_fallecimiento_director) from './csv/directores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
+\copy auxiliar_directores(anioestreno,titulo,nombre_director,ano_nacimiento_director,ano_fallecimiento_director) from './data/directores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --SELECT * FROM public.auxiliar_directores;
 
 
@@ -52,7 +51,7 @@ ano_fallecimiento_actor text,
 nombre_personaje text
 );
 
-\copy auxiliar_actores(anioestreno_pelicula,titulo_pelicula,nombre_actor,ano_nacimiento_actor,ano_fallecimiento_actor,nombre_personaje) from './csv/actores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
+\copy auxiliar_actores(anioestreno_pelicula,titulo_pelicula,nombre_actor,ano_nacimiento_actor,ano_fallecimiento_actor,nombre_personaje) from './data/actores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --SELECT * FROM public.auxiliar_actores;
 
 CREATE TABLE IF NOT EXISTS public."auxiliar_guionistas"(
@@ -62,7 +61,7 @@ titulo_pelicula text,
 ano_nacimiento_guionista text, -- quitar los /N para limpiar los datos
 ano_fallecimiento_guionista text 
 );
-\copy auxiliar_guionistas(anioestreno_pelicula,titulo_pelicula,nombre_guionista,ano_nacimiento_guionista,ano_fallecimiento_guionista) from './csv/guionistas_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
+\copy auxiliar_guionistas(anioestreno_pelicula,titulo_pelicula,nombre_guionista,ano_nacimiento_guionista,ano_fallecimiento_guionista) from './data/guionistas_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --SELECT * FROM public.guionistas1;
 
 
@@ -98,8 +97,6 @@ FROM public."auxiliar_personal";
 
 --sacamos 20 Personal aleaorio
 --SELECT * FROM public."Personal" ORDER BY random() LIMIT 20;
-
-
 
 
 CREATE TABLE IF NOT EXISTS public."Actores"
@@ -164,9 +161,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_peliculas"
     genero text
 );
 
-\copy auxiliar_peliculas(anio,titulo,genero,idioma,duracion,calificacion) from './csv/peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
-
-
+\copy auxiliar_peliculas(anio,titulo,genero,idioma,duracion,calificacion) from './data/peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 
 
 CREATE TABLE IF NOT EXISTS public."Peliculas"
@@ -200,8 +195,6 @@ FROM public."auxiliar_peliculas";
 -- salen las peliculas sin director, se hace el join mas abajo
 
 
-
-
 -- unir director con su pelicula
 UPDATE public."Peliculas" AS p                 -- tabla a actualizar , alias p
 SET nombre_personal_directores = ad.nombre_director   -- columna a actualizar , valor a actualizar
@@ -215,7 +208,6 @@ WHERE p.titulo = ad.titulo;                     -- condición de unión
 --SELECT * FROM public."Peliculas" WHERE nombre_personal_directores IS NOT NULL;
 
 
-
 CREATE TABLE IF NOT EXISTS public."auxiliar_actuan"
 (
     nombre_personal_actores text,
@@ -226,7 +218,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_actuan"
     ano_fallecimiento_actor text
 );
 --copiamos los datos del csv a la tabla auxiliar_actuan
-\copy auxiliar_actuan(anio_peliculas,titulo_peliculas,nombre_personal_actores,anio_nacimiento_actor,ano_fallecimiento_actor,nombre_personaje)  from './csv/actores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
+\copy auxiliar_actuan(anio_peliculas,titulo_peliculas,nombre_personal_actores,anio_nacimiento_actor,ano_fallecimiento_actor,nombre_personaje)  from './data/actores_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 
 CREATE TABLE IF NOT EXISTS public."Actuan"
 (
@@ -262,7 +254,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_guionizan"
     anio_fallecimiento_guionista text
 );
 --copiamos los datos del csv a la tabla auxiliar_guionizan
-\copy auxiliar_guionizan(anio_peliculas,titulo_peliculas,nombre_personal_guionistas,anio_nacimiento_guionista,anio_fallecimiento_guionista) from './csv/guionistas_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
+\copy auxiliar_guionizan(anio_peliculas,titulo_peliculas,nombre_personal_guionistas,anio_nacimiento_guionista,anio_fallecimiento_guionista) from './data/guionistas_peliculas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 CREATE TABLE IF NOT EXISTS public."Guionizan"
 (
     "anio_Peliculas" integer NOT NULL,
@@ -305,7 +297,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_caratulas"
 );
 
 --copiamos los datos del csv a la tabla auxiliar_caratulas
-\copy auxiliar_caratulas(anio_peliculas,titulo_peliculas,nombre_caratula,fecha,pagina_web_pagina_web,tamanio) from './csv/caratulas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
+\copy auxiliar_caratulas(anio_peliculas,titulo_peliculas,nombre_caratula,fecha,pagina_web_pagina_web,tamanio) from './data/caratulas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --SELECT * FROM public."auxiliar_caratulas";
 
 
@@ -319,7 +311,7 @@ CREATE TABLE IF NOT EXISTS public.auxiliar_criticas
     pagina_web_pagina_web text
 );
 
-\copy auxiliar_criticas(anio_peliculas,titulo_peliculas,nombre_critico,puntuacion,texto_critica,pagina_web_pagina_web) from './csv/criticas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
+\copy auxiliar_criticas(anio_peliculas,titulo_peliculas,nombre_critico,puntuacion,texto_critica,pagina_web_pagina_web) from './data/criticas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 --realizamos la union de paginas web
 INSERT INTO public.auxiliar_paginaweb (pagina_web)
 SELECT DISTINCT pagina_web_pagina_web
@@ -374,8 +366,6 @@ FROM public."auxiliar_caratulas";
 --SELECT * FROM public."Caratulas" ORDER BY random() LIMIT 20;
 
 
-
-
 CREATE TABLE IF NOT EXISTS public."Criticas"
 (
     anio_peliculas integer NOT NULL,
@@ -417,7 +407,7 @@ CREATE TABLE IF NOT EXISTS public."auxiliar_alojadas"
 );
 --2020	Fortuna	fortuna-2020	2021-04-16 12:56:19	https.//palomitas.com/películas/fortuna-2020_Carátula_mediana.jpg	Carátula_mediana
 
-\copy auxiliar_alojadas( anio_peliculas_caratulas, titulo_peliculas_caratulas, nombre_caratula_caratulas, fecha, pagina_web_pagina_web,tamanio) from './csv/caratulas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
+\copy auxiliar_alojadas( anio_peliculas_caratulas, titulo_peliculas_caratulas, nombre_caratula_caratulas, fecha, pagina_web_pagina_web,tamanio) from './data/caratulas.csv' WITH (FORMAT csv, DELIMITER E'\t', HEADER false, ENCODING 'UTF8');
 
 CREATE TABLE IF NOT EXISTS public."Alojadas"
 (
@@ -448,13 +438,12 @@ SELECT DISTINCT
 FROM public."auxiliar_alojadas";
 
 
-
 -- selecionamos 20 alojadas aleatorios
 --SELECT * FROM public."Alojadas" ORDER BY random() LIMIT 20;
 
 
 ------------------------------------------------------------------------------------------------------------------------
-----                                              CONSULTAS                                                         ----
+----                                              2. CONSULTAS                                         ----
 ------------------------------------------------------------------------------------------------------------------------
 
 \echo "---------------------- Consultas -----------------"
@@ -522,9 +511,8 @@ FROM public."Peliculas" p JOIN public."Criticas" c ON p.titulo = c.titulo_pelicu
 
 
 ------------------------------------------------------------------------------------------------------------------------
-----                                    CREACION DE USUARIOS Y TRIGGERS                                             ----
+----                                       3. AUDITORÍA Y TRIGGERS                                     ----
 ------------------------------------------------------------------------------------------------------------------------
-
 
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -544,7 +532,6 @@ CREATE TABLE auditoria(
     PRIMARY KEY (operation, stamp)
 );
  
-
 
 
 ------   Crear funcion para auditoria ------
@@ -572,45 +559,38 @@ $audit$ LANGUAGE plpgsql;
 ------------------------------------------------------------------------------------------------------------------------
 
 
-CREATE TRIGGER peliculas_auditoria BEFORE INSERT OR UPDATE ON "Peliculas"
+CREATE TRIGGER peliculas_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Peliculas"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER personal_auditoria BEFORE INSERT OR UPDATE ON "Personal"
+CREATE TRIGGER personal_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Personal"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER actores_auditoria BEFORE INSERT OR UPDATE ON "Actores"
+CREATE TRIGGER actores_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Actores"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER directores_auditoria BEFORE INSERT OR UPDATE ON "Directores"
+CREATE TRIGGER directores_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Directores"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER guionistas_auditoria BEFORE INSERT OR UPDATE ON "Guionistas"
+CREATE TRIGGER guionistas_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Guionistas"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER actuan_auditoria BEFORE INSERT OR UPDATE ON "Actuan"
+CREATE TRIGGER actuan_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Actuan"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER guionizan_auditoria BEFORE INSERT OR UPDATE ON "Guionizan"
+CREATE TRIGGER guionizan_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Guionizan"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER paginaweb_auditoria BEFORE INSERT OR UPDATE ON "Paginaweb"
+CREATE TRIGGER paginaweb_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Paginaweb"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER caratulas_auditoria BEFORE INSERT OR UPDATE ON "Caratulas"
+CREATE TRIGGER caratulas_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Caratulas"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER criticas_auditoria BEFORE INSERT OR UPDATE ON "Criticas"
+CREATE TRIGGER criticas_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Criticas"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
 
-CREATE TRIGGER alojadas_auditoria BEFORE INSERT OR UPDATE ON "Alojadas"
+CREATE TRIGGER alojadas_auditoria BEFORE INSERT OR UPDATE OR DELETE ON "Alojadas"
     FOR EACH ROW EXECUTE FUNCTION auditoria();
-
-
-
-
-
-
-
 
 
 ------   Pruebas de auditoria ------
@@ -633,13 +613,13 @@ VALUES ('EnnoS PatalasS');
 SELECT * FROM auditoria;
 
 
-
 ------   Crear funcion para introducir pagina web ------
 --CREATE TABLE IF NOT EXISTS public."Paginaweb"
 
 CREATE OR REPLACE FUNCTION check_webpage() RETURNS TRIGGER AS $pagina_cambio$
 BEGIN
-    INSERT INTO public."Paginaweb" (pagina_web) VALUES (NEW.pagina_web_pagina_web);
+    INSERT INTO public."Paginaweb" (pagina_web) VALUES (NEW.pagina_web_pagina_web)
+    ON CONFLICT (pagina_web) DO NOTHING;  -- solo inserta si la página aún no existe
     RETURN NEW;
 END;
 $pagina_cambio$ LANGUAGE plpgsql;
@@ -661,7 +641,6 @@ VALUES ('Hellboy', 'Carátula_mediana', 2004, 'Hellboy', 'https://palomitas.com/
 
 INSERT INTO "Criticas" (anio_peliculas, titulo_peliculas, nombre_critico, puntuacion, texto_critica, pagina_web_pagina_web)
 VALUES (2004, 'Hellboy', 'Roger Ebert', 3.5, 'The movie is entertaining in its own way, but it''s a long way from the top shelf of recent comic book movies.', 'https://www.rogerebert.com/reviews/hellboy-2004');
-
 
 
 ------   Puntuacion media de las peliculas ------
@@ -713,9 +692,8 @@ SET puntuacion = puntuacion;
 SELECT * FROM public.puntuacion_media;
 
 
-
 ------------------------------------------------------------------------------------------------------------------------
-----                                              USUARIOS                                                          ----
+----                                    4. USUARIOS Y PERMISOS (ROLES)                                 ----
 ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -740,19 +718,8 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO critico;
 GRANT INSERT, UPDATE, DELETE ON public."Criticas" TO critico;
 
 
-
 --permisos cliente
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO cliente;
 
 
-
-
-
-
 COMMIT;
-
-
-
-
-
-
